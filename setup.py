@@ -21,7 +21,7 @@ check_tesseract()
 setup(
     name="encapsu_view",
     version="0.1.0",
-    packages=find_packages(),
+    packages=find_packages(include=["encapsu_view", "encapsu_view.*"]),
     install_requires=[
         "numpy",
         "opencv-python-headless",
