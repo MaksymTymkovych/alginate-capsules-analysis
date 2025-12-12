@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+
+venv/
+env/
+
+# Local environment variables
+.env
+*.env
+
+.ipynb_checkpoints
+
+encapsu_view/data/test_images/
