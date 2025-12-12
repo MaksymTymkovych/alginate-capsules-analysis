@@ -6,6 +6,8 @@ import numpy as np
 import pytesseract
 import re
 
+import matplotlib.pyplot as plt
+
 from encapsu_view.entities.scale import Scale
 from encapsu_view.analysis.utils import create_color_range_from_bgr, detect_lines_from_mask, find_longest_horizontal_line
 
@@ -23,8 +25,8 @@ def detect_scale_ruller(image: np.ndarray,
         range_mask = cv2.inRange(hsv, lower, upper)
         mask = cv2.bitwise_or(mask, range_mask)
 
-    #plt.imshow(mask)
-    #plt.show()
+    plt.imshow(mask)
+    plt.show()
 
     kernel = np.ones((3, 3), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
@@ -198,5 +200,6 @@ def scale_detector(image: np.ndarray, visual_debug: bool = False) -> Dict:
     ruler_color_range = create_color_range_from_bgr(ruler_color, tolerance=10)
 
     ruler = detect_scale_ruller(image, ruler_color_range)
+    print(ruler)
     return ruler_data_to_scale(ruler)
 
