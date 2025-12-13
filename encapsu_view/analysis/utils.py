@@ -9,9 +9,9 @@ def create_color_range_from_bgr(bgr_color: Tuple[int, int, int],
     
     bgr_array = np.uint8([[[b, g, r]]])
     hsv_color = cv2.cvtColor(bgr_array, cv2.COLOR_BGR2HSV)[0][0]
-    h, s, v = hsv_color
+    h, s, v = int(hsv_color[0]), int(hsv_color[1]), int(hsv_color[2])
     
-    print(f"BGR: {bgr_color} -> HSV: {hsv_color}")
+    print(f"BGR: {bgr_color} -> HSV: {(h, s, v)}")
     
     if h < 10 or h > 170:
         lower1 = (0, max(0, s - tolerance), max(0, v - tolerance))
@@ -24,8 +24,8 @@ def create_color_range_from_bgr(bgr_color: Tuple[int, int, int],
         print(f"Range 2: lower={lower2}, upper={upper2}")
         
         return [
-            {'lower': lower1, 'upper': upper1},
-            {'lower': lower2, 'upper': upper2}
+            {'lower': tuple(int(x) for x in lower1), 'upper': tuple(int(x) for x in upper1)},
+            {'lower': tuple(int(x) for x in lower2), 'upper': tuple(int(x) for x in upper2)}
         ]
     else:
         lower = (max(0, h - tolerance), max(0, s - tolerance), max(0, v - tolerance))
@@ -33,7 +33,7 @@ def create_color_range_from_bgr(bgr_color: Tuple[int, int, int],
         
         print(f"Standard range: lower={lower}, upper={upper}")
         
-        return [{'lower': lower, 'upper': upper}]
+        return [{'lower': tuple(int(x) for x in lower), 'upper': tuple(int(x) for x in upper)}]
 
 
 def detect_lines_from_mask(mask: np.ndarray, min_line_length: int) -> List:
