@@ -6,13 +6,13 @@ This project provides tools for analyzing alginate capsules in images using comp
 
 ## Project Structure
 
-.
+```
 ├── encapsu_view/ # Python package with core functionality
 ├── LICENSE # Project license
 ├── notebooks/ # Jupyter/Colab notebooks
 │ └── demo.ipynb # Demo notebook for Google Colab
 ├── README.md # Project description (this file)
-
+```
 ---
 
 ## Setup
@@ -23,6 +23,8 @@ For example:
 pip install -e .
 
 ```
+From git:
+pip install git+https://github.com/MaksymTymkovych/alginate-capsules-analysis
 
 ---
 
@@ -48,4 +50,8 @@ from encapsu_view.visualization.hierarchy import visualize_tree, plot_capsule_hi
 License
 
 This project is licensed under the MIT License. See LICENSE for details.
+
+---
+Authors:
+# Add all participants
 
