@@ -24,8 +24,10 @@ pip install -e .
 
 ```
 From git:
-pip install git+https://github.com/MaksymTymkovych/alginate-capsules-analysis
 
+```
+pip install git+https://github.com/MaksymTymkovych/alginate-capsules-analysis
+```
 ---
 
 ## Google Colab
@@ -35,7 +37,7 @@ pip install git+https://github.com/MaksymTymkovych/alginate-capsules-analysis
 
 --- 
 
-Usage
+## Usage
 
 After installing dependencies, you can import and use the package in your Python scripts or notebooks:
 
@@ -47,11 +49,11 @@ from encapsu_view.visualization.hierarchy import visualize_tree, plot_capsule_hi
 ```
 
 ---
-License
+## License
 
 This project is licensed under the MIT License. See LICENSE for details.
 
 ---
-Authors:
-# Add all participants
+## Authors:
+- Add all participants
 
