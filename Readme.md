@@ -49,6 +49,14 @@ from encapsu_view.visualization.hierarchy import visualize_tree, plot_capsule_hi
 ```
 
 ---
+## Models
+- todo
+
+---
+## Datasets
+- todo
+
+---
 ## License
 
 This project is licensed under the MIT License. See LICENSE for details.
@@ -56,4 +64,8 @@ This project is licensed under the MIT License. See LICENSE for details.
 ---
 ## Authors:
 - Add all participants
+
+---
+## Citations:
+- TODO
 
