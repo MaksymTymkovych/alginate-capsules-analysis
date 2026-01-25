@@ -7,9 +7,9 @@ This project provides tools for analyzing alginate capsules in images using comp
 
 - [ ] Export to CSV (Table)
   - [ ] Feature list (form coef, capsule area, core area, core area relation to capsule area, distances - min, max, median, mean, px, microns)
-  - [ ] Update entities
-  - [ ] Create functionality to export entity
-  - [ ] Create script to test functionality
+  - [x] Update entities
+  - [x] Create functionality to export entity
+  - [x] Create script to test functionality
 - [ ] Web server update
   - [ ] One image inference
   - [ ] Multiple image inference (in archive)
