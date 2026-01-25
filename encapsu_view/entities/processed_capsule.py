@@ -16,6 +16,16 @@ class ProcessedCapsule:
         self.id = capsule_id or f"processed_capsule_{id(self)}"
 
         self.is_complete = self._calculate_completeness(image_shape) if image_shape else False
+        self.capsule_area=0
+        self.core_area=0
+        self.ratio=0
+        self.capsule_radius_min=0
+        self.capsule_radius_max=0
+        self.core_radius_min=0
+        self.core_radius_max=0
+        self.distance_to_core_min=0
+        self.distance_to_core_max=0
+        self.distance_to_core_median=0
 
     def _calculate_completeness(self, image_shape: Tuple[int, int], sample_points: int = 1000) -> bool:
         if not image_shape:
@@ -52,6 +62,16 @@ class ProcessedCapsule:
     def to_dict(self) -> dict:
         return {
             'id': self.id,
+            'capsule_area': self.capsule_area,
+            'core_area': self.core_area,
+            'ratio': self.ratio,
+            'capsule_radius_min': self.capsule_radius_min,
+            'capsule_radius_max': self.capsule_radius_max,
+            'core_radius_min': self.core_radius_min,
+            'core_radius_max': self.core_radius_max,
+            'distance_to_core_min': self.distance_to_core_min,
+            'distance_to_core_max': self.distance_to_core_max,
+            'distance_to_core_median': self.distance_to_core_median,
             'is_complete': self.is_complete,
             'ellipse': self.ellipse.to_dict(),
             'inner_objects': [inner.to_dict() for inner in self.inner_objects],
