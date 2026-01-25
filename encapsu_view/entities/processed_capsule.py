@@ -33,6 +33,11 @@ class ProcessedCapsule:
         self.capsule_radius_min=min(self.ellipse.axes[0], self.ellipse.axes[1])
         self.capsule_radius_max=max(self.ellipse.axes[0], self.ellipse.axes[1])
 
+        self.core_area=0
+        for contour in self.inner_objects:
+            self.core_area += contour.area
+
+        self.ratio=self.core_area/self.capsule_area
         pass
 
     def _calculate_completeness(self, image_shape: Tuple[int, int], sample_points: int = 1000) -> bool:
