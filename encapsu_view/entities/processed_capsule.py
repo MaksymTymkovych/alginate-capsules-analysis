@@ -1,6 +1,6 @@
 import math
 from typing import Tuple, List, Optional
-
+import csv
 import numpy as np
 
 from .ellipse import Ellipse
@@ -59,3 +59,31 @@ class ProcessedCapsule:
             'total_inner_area': sum(inner.area for inner in self.inner_objects),
             'filling_ratio': sum(inner.area for inner in self.inner_objects) / self.ellipse.area if self.ellipse.area > 0 else 0
         }
+    
+    def save_to_csv(self, filename: str, overwrite: bool = True, 
+                    field_date: str = "", field_conditions: str = "", 
+                    field_image_name: str = "", field_capsule_id: str = ""):
+        
+        data = self.to_dict()
+        
+        # Prepare the new header with additional fields
+        fieldnames = ['date', 'conditions', 'image_name', 'capsule_id'] + list(data.keys())
+
+        # Open the file in the desired mode (overwrite or append)
+        mode = 'w' if overwrite else 'a'
+        with open(filename, mode=mode, newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            
+            # Write header only if we're overwriting
+            if overwrite:
+                writer.writeheader()
+            
+            # Prepare data for writing
+            data_for_csv = {
+                'date': field_date,
+                'conditions': field_conditions,
+                'image_name': field_image_name,
+                'capsule_id': field_capsule_id,
+                **data  # Merging dicts
+            }
+            writer.writerow(data_for_csv)
