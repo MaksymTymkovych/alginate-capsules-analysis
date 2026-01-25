@@ -26,6 +26,14 @@ class ProcessedCapsule:
         self.distance_to_core_min=0
         self.distance_to_core_max=0
         self.distance_to_core_median=0
+        self._calculate_parameters()
+
+    def _calculate_parameters(self):
+        self.capsule_area=self.ellipse.area
+        self.capsule_radius_min=min(self.ellipse.axes[0], self.ellipse.axes[1])
+        self.capsule_radius_max=max(self.ellipse.axes[0], self.ellipse.axes[1])
+
+        pass
 
     def _calculate_completeness(self, image_shape: Tuple[int, int], sample_points: int = 1000) -> bool:
         if not image_shape:
