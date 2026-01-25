@@ -27,6 +27,7 @@ def example(visual_debug: bool = False):
         detected_data.plot_detection(image)
 
     processed_data = detected_data.convert_to_processed_data(ellipse_method="direct", visual_debug=visual_debug)
+    processed_data.save_to_csv(filename="csv.csv", overwrite=True, field_date="25.01.2026", field_conditions="15%", field_image_name="Snap-21062.tif")
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
 

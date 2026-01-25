@@ -65,5 +65,12 @@ class ProcessedData:
                 'average_aspect_ratio': np.mean([max(capsule.ellipse.axes) / min(capsule.ellipse.axes) for capsule in self.capsules if min(capsule.ellipse.axes) > 0]) if self.capsules else 0
             }
         }
+    
+    def save_to_csv(self, filename: str, overwrite: bool = True, 
+                    field_date: str = "", field_conditions: str = "", 
+                    field_image_name: str = ""):
+        for capsule in self.capsules:
+            if capsule.is_complete:
+                capsule.save_to_csv(filename=filename, overwrite=False, field_date=field_date, field_conditions=field_conditions, field_image_name=field_image_name, field_capsule_id=capsule.id)
 
 ProcessedData.visualize_detection = visualize_processed_detection
