@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from encapsu_view.entities.capsule import Capsule
 from encapsu_view.entities.scale import Scale
-from encapsu_view.entities.processed_capsule import ProcessedCapsule
+from encapsu_view.entities.processed_capsule import ProcessedCapsule, write_csv_rows
 
 from encapsu_view.visualization.utils import visualize_processed_detection
 
@@ -66,11 +66,20 @@ class ProcessedData:
             }
         }
     
-    def save_to_csv(self, filename: str, overwrite: bool = True, 
-                    field_date: str = "", field_conditions: str = "", 
-                    field_image_name: str = ""):
-        for capsule in self.capsules:
-            if capsule.is_complete:
-                capsule.save_to_csv(filename=filename, overwrite=False, field_date=field_date, field_conditions=field_conditions, field_image_name=field_image_name, field_capsule_id=capsule.id)
+    def to_rows(self, field_date: str = "", field_conditions: str = "",
+                field_image_name: str = "", only_complete: bool = True) -> List[dict]:
+        capsules = self.complete_capsules if only_complete else self.capsules
+        return [{
+            'date': field_date,
+            'conditions': field_conditions,
+            'image_name': field_image_name,
+            **capsule.to_row(self.scale)
+        } for capsule in capsules]
+
+    def save_to_csv(self, filename: str, overwrite: bool = True,
+                    field_date: str = "", field_conditions: str = "",
+                    field_image_name: str = "", only_complete: bool = True):
+        rows = self.to_rows(field_date, field_conditions, field_image_name, only_complete)
+        write_csv_rows(filename, rows, overwrite=overwrite)
 
 ProcessedData.visualize_detection = visualize_processed_detection

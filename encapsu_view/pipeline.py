@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from typing import Optional, Union, BinaryIO
+from typing import Optional, Union, BinaryIO, List
 import os
 
 import numpy as np
+import pandas as pd
 import cv2
 import matplotlib.pyplot as plt
 
@@ -80,6 +81,12 @@ class AnalysisResult:
         if self.source is not None:
             data['source'] = self.source
         return data
+
+    def to_rows(self, field_date: str = "", field_conditions: str = "", only_complete: bool = True) -> List[dict]:
+        return self.processed.to_rows(field_date, field_conditions, self.source or "", only_complete)
+
+    def to_dataframe(self, field_date: str = "", field_conditions: str = "", only_complete: bool = True) -> pd.DataFrame:
+        return pd.DataFrame(self.to_rows(field_date, field_conditions, only_complete))
 
 
 def analyze_image(image: np.ndarray,

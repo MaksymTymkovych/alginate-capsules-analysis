@@ -317,7 +317,9 @@ class DataProcessor:
         distance_threshold = params.get('distance_threshold', 3.0)
         min_samples = params.get('min_samples', 10)
         angle_tolerance = params.get('angle_tolerance', 15)
-        
+        # Fixed seed keeps the result reproducible between runs
+        rng = np.random.default_rng(params.get('seed', 0))
+
         edge_lines = []
         remaining_points = points.copy()
         
@@ -331,7 +333,7 @@ class DataProcessor:
             best_score = 0
             
             for _ in range(num_iterations):
-                indices = np.random.choice(len(remaining_points), 2, replace=False)
+                indices = rng.choice(len(remaining_points), 2, replace=False)
                 p1 = remaining_points[indices[0]]
                 p2 = remaining_points[indices[1]]
                 
@@ -397,16 +399,18 @@ class DataProcessor:
     
     @staticmethod
     def _fit_ellipse_ransac(points: np.ndarray, num_iterations: int = 100, 
-                          sample_size: int = 10, threshold: float = 3.0) -> Optional[Ellipse]:
+                          sample_size: int = 10, threshold: float = 3.0, seed: int = 0) -> Optional[Ellipse]:
 
         if len(points) < 5:
             return None
-        
+
+        rng = np.random.default_rng(seed)
+
         best_ellipse = None
         best_inliers = 0
         
         for _ in range(num_iterations):
-            indices = np.random.choice(len(points), min(sample_size, len(points)), replace=False)
+            indices = rng.choice(len(points), min(sample_size, len(points)), replace=False)
             sample_points = points[indices].astype(np.float32)
             
             try:
