@@ -10,9 +10,9 @@ This project provides tools for analyzing alginate capsules in images using comp
   - [x] Update entities
   - [x] Create functionality to export entity
   - [x] Create script to test functionality
-- [ ] Web server update
-  - [ ] One image inference
-  - [ ] Multiple image inference (in archive)
+- [x] Web server update
+  - [x] One image inference
+  - [x] Multiple image inference (in archive)
 - [ ] Computer Vision update
   - [ ] 
   - [ ]
@@ -49,6 +49,9 @@ pip install git+https://github.com/MaksymTymkovych/alginate-capsules-analysis
 
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/MaksymTymkovych/alginate-capsules-analysis/blob/main/notebooks/demo.ipynb)
 
+The notebook installs the package, starts the web app and prints a public `*.gradio.live` link.
+To test unreleased changes, set `BRANCH` in the install cell (e.g. `"develop"`).
+
 
 --- 
 
@@ -61,6 +64,38 @@ from encapsu_view.analysis.detection import process_image_with_capsules, capsule
 from encapsu_view.analysis.scale import scale_detector
 from encapsu_view.visualization.hierarchy import visualize_tree, plot_capsule_hierarchy
 
+```
+
+Single image:
+
+```
+from encapsu_view.pipeline import analyze_file
+
+result = analyze_file("image.tif")
+df = result.to_dataframe(field_date="26.10.2026", field_conditions="15%")
+```
+
+Batch processing (folder or ZIP archive):
+
+```
+python -m encapsu_view.batch path/to/images -o batch_output --date 26.10.2026 --conditions "15%"
+python -m encapsu_view.batch images.zip -o batch_output --all --zip
+```
+
+Output: `capsules.csv` (one row per capsule, complete capsules only unless `--all`), `summary.csv` (one row per image, with errors), `results.json` and `visualizations/`.
+
+Web app (single image and batch tabs):
+
+```
+python -m encapsu_view.app            # http://localhost:7860
+python -m encapsu_view.app --share    # public gradio.live link
+```
+
+From Python / a notebook:
+
+```
+from encapsu_view.app import launch
+launch(share=True)
 ```
 
 ---

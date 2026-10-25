@@ -18,3 +18,11 @@ encapsu_view/data/test_images/
 # CSV output of experiment scripts
 csv.csv
 processed_capsule.csv
+
+# Generated test batch and batch outputs
+encapsu_view/data/test_batch/
+encapsu_view/data/test_batch.zip
+batch_output/
+batch_output.zip
+encapsu_view/data/test_batch_copies/
+encapsu_view/data/test_batch_copies.zip
