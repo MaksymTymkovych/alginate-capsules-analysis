@@ -3,6 +3,21 @@
 This project provides tools for analyzing alginate capsules in images using computer vision and capsule detection algorithms. It includes a Python package, helper notebooks, and a demo notebook that can be run directly in Google Colab.
 
 ---
+## TODO List
+
+- [x] Export to CSV (Table)
+  - [x] Feature list (form coef, capsule area, core area, core area relation to capsule area, distances - min, max, median, mean, px, microns)
+  - [x] Update entities
+  - [x] Create functionality to export entity
+  - [x] Create script to test functionality
+- [ ] Web server update
+  - [ ] One image inference
+  - [ ] Multiple image inference (in archive)
+- [ ] Computer Vision update
+  - [ ] 
+  - [ ]
+ 
+---
 
 ## Project Structure
 

@@ -1,8 +1,9 @@
 import json
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-from anytree import Node, RenderTree
+from anytree import Node, RenderTree, ContStyle, AsciiStyle
 
 
 from encapsu_view.analysis.processed_data import ProcessedData
@@ -33,32 +34,49 @@ def create_tree_from_processed_data(processed_data: ProcessedData) -> Node:
     
     return root
 
-def visualize_tree(processed_data: ProcessedData):
+def format_tree(processed_data: ProcessedData, unicode: bool = True) -> str:
 
     root = create_tree_from_processed_data(processed_data)
-    
-    print("🌳 Tree Structure of Capsules:")
-    print("=" * 50)
-    
-    for pre, fill, node in RenderTree(root):
+    if unicode:
+        icons = {"tree": "🌳 ", "image": "📷 ", "capsule": "💊 ", "inner": "🔹 "}
+        style = ContStyle()
+    else:
+        icons = {"tree": "", "image": "", "capsule": "", "inner": ""}
+        style = AsciiStyle()
+
+    lines = [f"{icons['tree']}Tree Structure of Capsules:", "=" * 50]
+
+    for pre, fill, node in RenderTree(root, style=style):
         if node.name == "Image":
-            print(f"{pre}📷 {node.name}")
-            print(f"{pre}   Shape: {node.image_shape}")
-            print(f"{pre}   Scale: {node.scale}")
-            print(f"{pre}   Completeness: {node.completeness_ratio:.2f}")
+            lines.append(f"{pre}{icons['image']}{node.name}")
+            lines.append(f"{pre}   Shape: {node.image_shape}")
+            lines.append(f"{pre}   Scale: {node.scale}")
+            lines.append(f"{pre}   Completeness: {node.completeness_ratio:.2f}")
         elif "Capsule" in node.name:
-            print(f"{pre}💊 {node.name}")
-            print(f"{pre}   Center: ({node.ellipse_center[0]:.1f}, {node.ellipse_center[1]:.1f})")
-            print(f"{pre}   Axes: ({node.ellipse_axes[0]:.1f}, {node.ellipse_axes[1]:.1f})")
-            print(f"{pre}   Area: {node.ellipse_area:.1f}")
-            print(f"{pre}   Complete: {node.is_complete}")
+            lines.append(f"{pre}{icons['capsule']}{node.name}")
+            lines.append(f"{pre}   Center: ({node.ellipse_center[0]:.1f}, {node.ellipse_center[1]:.1f})")
+            lines.append(f"{pre}   Axes: ({node.ellipse_axes[0]:.1f}, {node.ellipse_axes[1]:.1f})")
+            lines.append(f"{pre}   Area: {node.ellipse_area:.1f}")
+            lines.append(f"{pre}   Complete: {node.is_complete}")
         else:
-            print(f"{pre}🔹 {node.name}")
-            print(f"{pre}   Area: {node.area:.1f}")
-            print(f"{pre}   Center: ({node.centroid[0]:.1f}, {node.centroid[1]:.1f})")
+            lines.append(f"{pre}{icons['inner']}{node.name}")
+            lines.append(f"{pre}   Area: {node.area:.1f}")
+            lines.append(f"{pre}   Center: ({node.centroid[0]:.1f}, {node.centroid[1]:.1f})")
+
+    return "\n".join(lines)
 
 
-def plot_capsule_hierarchy(processed_data: ProcessedData):
+def _stdout_supports_unicode() -> bool:
+    encoding = getattr(sys.stdout, "encoding", None) or ""
+    return encoding.lower().replace("-", "") in ("utf8", "utf16", "utf32")
+
+
+def visualize_tree(processed_data: ProcessedData):
+    # Windows consoles often use cp1251/cp866, which cannot encode emoji or box-drawing characters
+    print(format_tree(processed_data, unicode=_stdout_supports_unicode()))
+
+
+def plot_capsule_hierarchy(processed_data: ProcessedData, show: bool = True) -> plt.Figure:
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
     
@@ -87,7 +105,10 @@ def plot_capsule_hierarchy(processed_data: ProcessedData):
     ax2.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.show()
+    if show:
+        plt.show()
+
+    return fig
 
 def export_to_json(processed_data: ProcessedData, filename: str = "capsules_data.json"):
     data_dict = processed_data.to_dict()

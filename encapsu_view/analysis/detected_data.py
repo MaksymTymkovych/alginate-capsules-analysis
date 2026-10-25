@@ -211,7 +211,7 @@ class DetectedData:
             'scale': {
                 'pixels_per_micron': float(self.scale.pixels_per_micron),
                 'unit': self.scale.unit
-            },
+            } if self.scale is not None else None,
             'completeness_ratio': float(self.get_completeness_ratio()),
             'capsules': [capsule.to_dict() for capsule in self.capsules],
             'statistics': {

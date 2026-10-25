@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from encapsu_view.entities.capsule import Capsule
 from encapsu_view.entities.scale import Scale
-from encapsu_view.entities.processed_capsule import ProcessedCapsule
+from encapsu_view.entities.processed_capsule import ProcessedCapsule, write_csv_rows
 
 from encapsu_view.visualization.utils import visualize_processed_detection
 
@@ -53,7 +53,7 @@ class ProcessedData:
             'scale': {
                 'pixels_per_micron': float(self.scale.pixels_per_micron),
                 'unit': self.scale.unit
-            },
+            } if self.scale is not None else None,
             'completeness_ratio': float(self.get_completeness_ratio()),
             'capsules': [capsule.to_dict() for capsule in self.capsules],
             'statistics': {
@@ -65,5 +65,21 @@ class ProcessedData:
                 'average_aspect_ratio': np.mean([max(capsule.ellipse.axes) / min(capsule.ellipse.axes) for capsule in self.capsules if min(capsule.ellipse.axes) > 0]) if self.capsules else 0
             }
         }
+    
+    def to_rows(self, field_date: str = "", field_conditions: str = "",
+                field_image_name: str = "", only_complete: bool = True) -> List[dict]:
+        capsules = self.complete_capsules if only_complete else self.capsules
+        return [{
+            'date': field_date,
+            'conditions': field_conditions,
+            'image_name': field_image_name,
+            **capsule.to_row(self.scale)
+        } for capsule in capsules]
+
+    def save_to_csv(self, filename: str, overwrite: bool = True,
+                    field_date: str = "", field_conditions: str = "",
+                    field_image_name: str = "", only_complete: bool = True):
+        rows = self.to_rows(field_date, field_conditions, field_image_name, only_complete)
+        write_csv_rows(filename, rows, overwrite=overwrite)
 
 ProcessedData.visualize_detection = visualize_processed_detection
