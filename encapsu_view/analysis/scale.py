@@ -15,7 +15,8 @@ from encapsu_view.analysis.utils import create_color_range_from_bgr, detect_line
 def detect_scale_ruller(image: np.ndarray, 
                       color_ranges: List[Dict[str, Tuple[int, int, int]]],
                       min_line_length: int = 100,
-                      text_region_height: int = 150) -> Optional[Dict]:
+                      text_region_height: int = 150,
+                      visual_debug: bool = False) -> Optional[Dict]:
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     mask = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
@@ -25,8 +26,9 @@ def detect_scale_ruller(image: np.ndarray,
         range_mask = cv2.inRange(hsv, lower, upper)
         mask = cv2.bitwise_or(mask, range_mask)
 
-    plt.imshow(mask)
-    plt.show()
+    if visual_debug:
+        plt.imshow(mask)
+        plt.show()
 
     kernel = np.ones((3, 3), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
@@ -195,11 +197,20 @@ def ruler_data_to_scale(ruler_data: dict) -> Scale:
     return Scale(pixels_per_micron=pixels_per_micron, unit="µm")
 
 
-def scale_detector(image: np.ndarray, visual_debug: bool = False) -> Dict:
+def scale_detector(image: np.ndarray, visual_debug: bool = False) -> Optional[Scale]:
     ruler_color = (0, 0, 255) # BGR
     ruler_color_range = create_color_range_from_bgr(ruler_color, tolerance=10)
 
-    ruler = detect_scale_ruller(image, ruler_color_range)
-    print(ruler)
-    return ruler_data_to_scale(ruler)
+    ruler = detect_scale_ruller(image, ruler_color_range, visual_debug=visual_debug)
+    if visual_debug:
+        print(ruler)
 
+    if ruler is None or not ruler.get('text'):
+        print("Warning: scale ruler was not found, measurements will stay in pixels")
+        return None
+
+    try:
+        return ruler_data_to_scale(ruler)
+    except ValueError as e:
+        print(f"Warning: {e}, measurements will stay in pixels")
+        return None
