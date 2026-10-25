@@ -126,7 +126,7 @@ def _json_default(value):
     return str(value)
 
 
-def _strip_contour_points(data: dict) -> dict:
+def strip_contour_points(data: dict) -> dict:
     # Contour points make results.json huge; summary values are kept
     for capsule in data.get('capsules', []):
         for inner in capsule.get('inner_objects', []):
@@ -175,7 +175,7 @@ def analyze_files(paths: List[PathLike],
             result = analyze_file(path, **analyze_kwargs)
             result.source = source
             item.rows = result.to_rows(field_date, field_conditions, only_complete=False)
-            item.data = _strip_contour_points(result.to_dict())
+            item.data = strip_contour_points(result.to_dict())
 
             if output_dir is not None:
                 vis_name = os.path.splitext(source.replace("/", "__"))[0] + ".png"
@@ -197,7 +197,7 @@ def analyze_folder(folder: PathLike, recursive: bool = True, **kwargs) -> BatchR
     return analyze_files(find_images(folder, recursive), base_dir=folder, **kwargs)
 
 
-def _safe_extract(zip_file: zipfile.ZipFile, target_dir: str):
+def safe_extract(zip_file: zipfile.ZipFile, target_dir: str):
     # Protect against entries like "../../file" escaping the target directory
     target_dir = os.path.abspath(target_dir)
     for member in zip_file.namelist():
@@ -211,7 +211,7 @@ def analyze_zip(zip_path: PathLike, **kwargs) -> BatchResult:
     extract_dir = tempfile.mkdtemp(prefix="encapsu_batch_")
     try:
         with zipfile.ZipFile(os.fspath(zip_path), 'r') as zip_file:
-            _safe_extract(zip_file, extract_dir)
+            safe_extract(zip_file, extract_dir)
         return analyze_folder(extract_dir, **kwargs)
     finally:
         shutil.rmtree(extract_dir, ignore_errors=True)

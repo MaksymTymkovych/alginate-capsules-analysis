@@ -10,9 +10,9 @@ This project provides tools for analyzing alginate capsules in images using comp
   - [x] Update entities
   - [x] Create functionality to export entity
   - [x] Create script to test functionality
-- [ ] Web server update
-  - [ ] One image inference
-  - [ ] Multiple image inference (in archive)
+- [x] Web server update
+  - [x] One image inference
+  - [x] Multiple image inference (in archive)
 - [ ] Computer Vision update
   - [ ] 
   - [ ]
@@ -49,6 +49,9 @@ pip install git+https://github.com/MaksymTymkovych/alginate-capsules-analysis
 
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/MaksymTymkovych/alginate-capsules-analysis/blob/main/notebooks/demo.ipynb)
 
+The notebook installs the package, starts the web app and prints a public `*.gradio.live` link.
+To test unreleased changes, set `BRANCH` in the install cell (e.g. `"develop"`).
+
 
 --- 
 
@@ -80,6 +83,20 @@ python -m encapsu_view.batch images.zip -o batch_output --all --zip
 ```
 
 Output: `capsules.csv` (one row per capsule, complete capsules only unless `--all`), `summary.csv` (one row per image, with errors), `results.json` and `visualizations/`.
+
+Web app (single image and batch tabs):
+
+```
+python -m encapsu_view.app            # http://localhost:7860
+python -m encapsu_view.app --share    # public gradio.live link
+```
+
+From Python / a notebook:
+
+```
+from encapsu_view.app import launch
+launch(share=True)
+```
 
 ---
 ## Models
