@@ -37,6 +37,11 @@ _capsule_predictor = None
 _inner_predictor = None
 
 
+def _get_device() -> str:
+    import torch
+    return "cuda" if torch.cuda.is_available() else "cpu"
+
+
 def load_model_file(local_path: str, hf_repo: str, hf_filename: str):
 
     use_hf = os.getenv("USE_HF_MODELS", "0") == "1"
@@ -74,6 +79,7 @@ def _initialize_capsule_predictor(predictor_path: str = "/media/maxim/big-500/da
     
     cfg.MODEL.WEIGHTS = model_path
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
+    cfg.MODEL.DEVICE = _get_device()
     
     _capsule_predictor = DefaultPredictor(cfg)
 
@@ -102,6 +108,7 @@ def _initialize_inner_predictor(predictor_path: str = "/media/maxim/big-500/data
     
     cfg.MODEL.WEIGHTS = model_path
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
+    cfg.MODEL.DEVICE = _get_device()
     
     _inner_predictor = DefaultPredictor(cfg)
 

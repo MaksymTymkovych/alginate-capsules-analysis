@@ -11,17 +11,12 @@ def create_color_range_from_bgr(bgr_color: Tuple[int, int, int],
     hsv_color = cv2.cvtColor(bgr_array, cv2.COLOR_BGR2HSV)[0][0]
     h, s, v = int(hsv_color[0]), int(hsv_color[1]), int(hsv_color[2])
     
-    print(f"BGR: {bgr_color} -> HSV: {(h, s, v)}")
-    
     if h < 10 or h > 170:
         lower1 = (0, max(0, s - tolerance), max(0, v - tolerance))
         upper1 = (min(180, 10 + tolerance), min(255, s + tolerance), min(255, v + tolerance))
         
         lower2 = (max(0, 170 - tolerance), max(0, s - tolerance), max(0, v - tolerance))
         upper2 = (180, min(255, s + tolerance), min(255, v + tolerance))
-        
-        print(f"Range 1: lower={lower1}, upper={upper1}")
-        print(f"Range 2: lower={lower2}, upper={upper2}")
         
         return [
             {'lower': tuple(int(x) for x in lower1), 'upper': tuple(int(x) for x in upper1)},
@@ -31,7 +26,6 @@ def create_color_range_from_bgr(bgr_color: Tuple[int, int, int],
         lower = (max(0, h - tolerance), max(0, s - tolerance), max(0, v - tolerance))
         upper = (min(180, h + tolerance), min(255, s + tolerance), min(255, v + tolerance))
         
-        print(f"Standard range: lower={lower}, upper={upper}")
         
         return [{'lower': tuple(int(x) for x in lower), 'upper': tuple(int(x) for x in upper)}]
 
