@@ -63,6 +63,24 @@ from encapsu_view.visualization.hierarchy import visualize_tree, plot_capsule_hi
 
 ```
 
+Single image:
+
+```
+from encapsu_view.pipeline import analyze_file
+
+result = analyze_file("image.tif")
+df = result.to_dataframe(field_date="26.10.2026", field_conditions="15%")
+```
+
+Batch processing (folder or ZIP archive):
+
+```
+python -m encapsu_view.batch path/to/images -o batch_output --date 26.10.2026 --conditions "15%"
+python -m encapsu_view.batch images.zip -o batch_output --all --zip
+```
+
+Output: `capsules.csv` (one row per capsule, complete capsules only unless `--all`), `summary.csv` (one row per image, with errors), `results.json` and `visualizations/`.
+
 ---
 ## Models
 - todo
