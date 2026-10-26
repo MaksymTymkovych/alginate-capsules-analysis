@@ -84,6 +84,11 @@ python -m encapsu_view.batch images.zip -o batch_output --all --zip
 
 Output: `capsules.csv` (one row per capsule, complete capsules only unless `--all`), `summary.csv` (one row per image, with errors), `results.json` and `visualizations/`.
 
+A batch is treated as a time series: images are ordered by file name in natural order (`frame_2` before `frame_10`),
+and every capsule gets a `track_id` that stays the same across images. A shift of the whole field (microscope stage)
+is compensated using complete capsules and reported in `summary.csv` (`field_shift_x_px`, `field_shift_y_px`).
+Track ids are drawn on the visualizations. Use `--no-track` for independent images.
+
 Web app (single image and batch tabs):
 
 ```

@@ -11,6 +11,8 @@ batch_dir = os.path.join(base_dir, 'data', 'test_batch')
 batch_zip = os.path.join(base_dir, 'data', 'test_batch.zip')
 copies_dir = os.path.join(base_dir, 'data', 'test_batch_copies')
 copies_zip = os.path.join(base_dir, 'data', 'test_batch_copies.zip')
+series_dir = os.path.join(base_dir, 'data', 'test_batch_series')
+series_zip = os.path.join(base_dir, 'data', 'test_batch_series.zip')
 
 
 def save(path: str, image: np.ndarray):
@@ -71,6 +73,34 @@ def make_copies_batch(count: int = 10):
     print(f"Copies zip:   {copies_zip}")
 
 
+def make_series_batch(count: int = 12, step=(-15.0, -8.0), jitter: float = 3.0, seed: int = 0):
+    """Build a time series with a drifting microscope stage: the whole field moves a bit every frame.
+
+    Files are named frame_1 ... frame_N without zero padding to check the natural sort order.
+    """
+    if os.path.exists(series_dir):
+        shutil.rmtree(series_dir)
+    os.makedirs(series_dir)
+
+    image = cv2.imread(source_image)
+    height, width = image.shape[:2]
+    # Fill uncovered borders with the background color, so they do not look like objects
+    background = tuple(int(v) for v in np.median(image.reshape(-1, 3), axis=0))
+    rng = np.random.default_rng(seed)
+
+    for i in range(count):
+        dx = step[0] * i + rng.uniform(-jitter, jitter)
+        dy = step[1] * i + rng.uniform(-jitter, jitter)
+        matrix = np.float32([[1, 0, dx], [0, 1, dy]])
+        frame = cv2.warpAffine(image, matrix, (width, height), borderMode=cv2.BORDER_CONSTANT, borderValue=background)
+        save(os.path.join(series_dir, f'frame_{i + 1}.png'), frame)
+
+    pack_zip(series_dir, series_zip)
+
+    print(f"Series batch: {series_dir} ({count} frames, stage step {step} px/frame)")
+    print(f"Series zip:   {series_zip}")
+
+
 def pack_zip(folder: str, zip_path: str):
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, _, files in os.walk(folder):
@@ -85,9 +115,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create test batches from Snap-21062.tif")
     parser.add_argument("--copies", type=int, metavar="N",
                         help="create N identical copies with the scale ruler instead of the edge-case batch")
+    parser.add_argument("--series", type=int, metavar="N",
+                        help="create a time series of N frames with a drifting stage (for tracking)")
     args = parser.parse_args()
 
-    if args.copies:
+    if args.series:
+        make_series_batch(args.series)
+    elif args.copies:
         make_copies_batch(args.copies)
     else:
         make_test_batch()

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, List, Union, Dict
+from typing import Optional, List, Union, Dict, Tuple
 import argparse
 import json
 import os
@@ -14,6 +14,7 @@ from tqdm import tqdm
 
 from encapsu_view.pipeline import analyze_file, SUPPORTED_EXTENSIONS
 from encapsu_view.entities.processed_capsule import write_csv_rows
+from encapsu_view.tracking import TrackerConfig, track_capsules, natural_sort_key
 
 
 PathLike = Union[str, os.PathLike]
@@ -31,6 +32,9 @@ class BatchItem:
     data: Optional[dict] = None
     visualization_path: Optional[str] = None
     error: Optional[str] = None
+    # Set by tracking: position in the time series and field (stage) shift relative to the first frame, px
+    frame: Optional[int] = None
+    field_shift: Optional[Tuple[float, float]] = None
 
     @property
     def ok(self) -> bool:
@@ -39,7 +43,10 @@ class BatchItem:
     def summary(self) -> dict:
         statistics = (self.data or {}).get('statistics', {})
         scale = (self.data or {}).get('scale')
-        return {
+        summary = {}
+        if self.frame is not None:
+            summary['frame'] = self.frame
+        summary.update({
             'image_name': self.source,
             'status': 'ok' if self.ok else 'error',
             'error': self.error or "",
@@ -48,7 +55,10 @@ class BatchItem:
             'cropped_capsules': statistics.get('cropped_capsules', 0),
             'total_inner_objects': statistics.get('total_inner_objects', 0),
             'pixels_per_micron': scale['pixels_per_micron'] if scale else None,
-        }
+        })
+        if self.field_shift is not None:
+            summary['field_shift_x_px'], summary['field_shift_y_px'] = self.field_shift
+        return summary
 
 
 @dataclass
@@ -135,18 +145,68 @@ def strip_contour_points(data: dict) -> dict:
 
 
 def find_images(folder: PathLike, recursive: bool = True) -> List[str]:
+    """Images in natural order (frame_2 before frame_10): the order defines the time series."""
     folder = os.fspath(folder)
     found = []
     for root, dirs, files in os.walk(folder):
         # Skip macOS archive junk and hidden folders
-        dirs[:] = sorted(d for d in dirs if not d.startswith('.') and d != '__MACOSX')
-        for name in sorted(files):
+        dirs[:] = [d for d in dirs if not d.startswith('.') and d != '__MACOSX']
+        for name in files:
             if name.startswith('.') or not name.lower().endswith(SUPPORTED_EXTENSIONS):
                 continue
             found.append(os.path.join(root, name))
         if not recursive:
             break
-    return found
+    return sorted(found, key=lambda path: natural_sort_key(os.path.relpath(path, folder)))
+
+
+def _capsule_radius(row: dict) -> float:
+    return (row['capsule_radius_min_px'] + row['capsule_radius_max_px']) / 2
+
+
+def _with_tracking_columns(row: dict, frame: int, track_id: int) -> dict:
+    # 'frame' goes before image_name, 'track_id' right after capsule_id, so they are easy to find in the table
+    out = {}
+    for key, value in row.items():
+        if key == 'image_name':
+            out['frame'] = frame
+        out[key] = value
+        if key == 'capsule_id':
+            out['track_id'] = track_id
+    return out
+
+
+def _draw_track_ids(item: BatchItem):
+    image = cv2.imdecode(np.fromfile(item.visualization_path, dtype=np.uint8), cv2.IMREAD_COLOR)
+    height, width = image.shape[:2]
+    font_scale = max(1.0, width / 800)
+    thickness = max(2, int(font_scale * 2))
+    for row in item.rows:
+        label = f"#{row['track_id']}"
+        # Cropped capsules may have the ellipse center outside the image
+        x = int(min(max(row['center_x_px'], 0), width - 1))
+        y = int(min(max(row['center_y_px'], 0), height - 1))
+        (text_w, text_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
+        x = min(max(x - text_w // 2, 0), width - text_w)
+        y = min(max(y + text_h // 2, text_h), height - 1)
+        cv2.putText(image, label, (x, y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), thickness + 3)
+        cv2.putText(image, label, (x, y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 255, 255), thickness)
+    cv2.imencode(".png", image)[1].tofile(item.visualization_path)
+
+
+def apply_tracking(items: List[BatchItem], config: Optional[TrackerConfig] = None):
+    """Treat the items as an ordered time series and give every capsule a persistent track_id."""
+    frames = [[(row['center_x_px'], row['center_y_px'], _capsule_radius(row), row['is_complete'])
+               for row in item.rows]
+              for item in items]
+    result = track_capsules(frames, config)
+
+    for frame, (item, track_ids, shift) in enumerate(zip(items, result.track_ids, result.field_shifts)):
+        item.frame = frame
+        item.field_shift = shift
+        item.rows = [_with_tracking_columns(row, frame, track_id) for row, track_id in zip(item.rows, track_ids)]
+        if item.visualization_path and item.rows:
+            _draw_track_ids(item)
 
 
 def analyze_files(paths: List[PathLike],
@@ -155,11 +215,15 @@ def analyze_files(paths: List[PathLike],
                   field_date: str = "",
                   field_conditions: str = "",
                   progress: bool = True,
+                  track: bool = True,
+                  tracker_config: Optional[TrackerConfig] = None,
                   **analyze_kwargs) -> BatchResult:
     """Analyze images one by one; a failure on one file is recorded and does not stop the batch.
 
     If output_dir is given, a visualization is saved for every image right away,
     so images do not have to be kept in memory.
+    With track=True the paths are treated as a time series in the given order,
+    and capsules get a persistent track_id across images.
     """
     if output_dir is not None:
         output_dir = os.fspath(output_dir)
@@ -189,6 +253,9 @@ def analyze_files(paths: List[PathLike],
             print(f"Warning: failed to analyze {source}: {item.error}")
 
         items.append(item)
+
+    if track:
+        apply_tracking(items, tracker_config)
 
     return BatchResult(items=items, output_dir=output_dir)
 
@@ -225,10 +292,13 @@ def main(argv: Optional[List[str]] = None):
     parser.add_argument("--conditions", default="", help="value for the 'conditions' column")
     parser.add_argument("--all", action="store_true", help="include cropped capsules in capsules.csv")
     parser.add_argument("--zip", action="store_true", help="also pack results into <output>.zip")
+    parser.add_argument("--no-track", action="store_true",
+                        help="do not track capsules across images (images are independent, not a time series)")
     args = parser.parse_args(argv)
 
     run = analyze_zip if args.input.lower().endswith(".zip") else analyze_folder
-    batch = run(args.input, output_dir=args.output, field_date=args.date, field_conditions=args.conditions)
+    batch = run(args.input, output_dir=args.output, field_date=args.date, field_conditions=args.conditions,
+                track=not args.no_track)
 
     paths = batch.save(only_complete=not args.all)
     if args.zip:

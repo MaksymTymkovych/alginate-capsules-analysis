@@ -73,7 +73,7 @@ def _collect_batch_inputs(file_paths: List[str], inputs_dir: str) -> List[str]:
     return find_images(inputs_dir)
 
 
-def run_batch(files, field_date: str, field_conditions: str, include_cropped: bool,
+def run_batch(files, field_date: str, field_conditions: str, include_cropped: bool, track: bool,
               progress=gr.Progress(track_tqdm=True)):
     if not files:
         raise gr.Error("Upload a ZIP archive or images first")
@@ -91,7 +91,7 @@ def run_batch(files, field_date: str, field_conditions: str, include_cropped: bo
         raise gr.Error(f"No images found. Supported formats: {', '.join(SUPPORTED_EXTENSIONS)}")
 
     batch = analyze_files(image_paths, output_dir=output_dir, base_dir=inputs_dir,
-                          field_date=field_date, field_conditions=field_conditions)
+                          field_date=field_date, field_conditions=field_conditions, track=track)
 
     only_complete = not include_cropped
     zip_path = batch.to_zip(os.path.join(work_dir, "capsule_analysis_results.zip"), only_complete=only_complete)
@@ -136,7 +136,8 @@ def build_demo() -> gr.Blocks:
                 )
 
             with gr.Tab("Batch"):
-                gr.Markdown("Upload a ZIP archive with images, or several images at once.")
+                gr.Markdown("Upload a ZIP archive with images, or several images at once. "
+                            "Images are processed in natural file name order (frame_2 before frame_10).")
                 with gr.Row():
                     with gr.Column(scale=1):
                         batch_files = gr.File(label="ZIP archive or images", file_types=BATCH_FILE_TYPES,
@@ -144,6 +145,9 @@ def build_demo() -> gr.Blocks:
                         batch_date = gr.Textbox(label="Date", placeholder="e.g. 26.10.2026")
                         batch_conditions = gr.Textbox(label="Conditions", placeholder="e.g. 15%")
                         batch_cropped = gr.Checkbox(label="Include cropped capsules in the table", value=False)
+                        batch_track = gr.Checkbox(
+                            label="Time series: track capsules across images (track_id, stage shift compensation)",
+                            value=True)
                         batch_button = gr.Button("Run batch analysis", variant="primary")
                     with gr.Column(scale=2):
                         batch_status = gr.Markdown()
@@ -155,7 +159,7 @@ def build_demo() -> gr.Blocks:
 
                 batch_button.click(
                     run_batch,
-                    inputs=[batch_files, batch_date, batch_conditions, batch_cropped],
+                    inputs=[batch_files, batch_date, batch_conditions, batch_cropped, batch_track],
                     outputs=[gallery, batch_status, summary_table, batch_table, batch_zip],
                 )
 
